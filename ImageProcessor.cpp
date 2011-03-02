@@ -32,7 +32,7 @@ ImageProcessor::ImageProcessor(const IplImage* image,const char * title,bool dis
 ImageProcessor::~ImageProcessor()
 {
 	cvReleaseImage(&img);	
-	delete titleName;
+	//delete titleName;
 }
 IplImage* ImageProcessor::getImg()
 {

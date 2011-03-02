@@ -6,13 +6,13 @@
 --------------------Configuration: Resize - Win32 Debug--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPE955.tmp" with contents
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPB4DD.tmp" with contents
 [
 /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_AFXDLL" /D "_MBCS" /FR"Debug/" /Fp"Debug/Resize.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
 "D:\codes\C++\Projects\Resize\ResizeView.cpp"
 ]
-Creating command line "cl.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPE955.tmp" 
-Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPE965.tmp" with contents
+Creating command line "cl.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPB4DD.tmp" 
+Creating temporary file "C:\Users\ADMINI~1\AppData\Local\Temp\RSPB4DE.tmp" with contents
 [
 cv.lib cxcore.lib ml.lib cvaux.lib highgui.lib cvcam.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/Resize.pdb" /debug /machine:I386 /out:"Debug/Resize.exe" /pdbtype:sept 
 ".\Debug\ImageProcessor.obj"
@@ -25,7 +25,7 @@ cv.lib cxcore.lib ml.lib cvaux.lib highgui.lib cvcam.lib /nologo /subsystem:wind
 ".\Debug\StdAfx.obj"
 ".\Debug\Resize.res"
 ]
-Creating command line "link.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPE965.tmp"
+Creating command line "link.exe @C:\Users\ADMINI~1\AppData\Local\Temp\RSPB4DE.tmp"
 <h3>Output Window</h3>
 Compiling...
 ResizeView.cpp
