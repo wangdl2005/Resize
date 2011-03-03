@@ -3,6 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "ImageProcessor.h"
+#include "SeamCarveResize.h"
 
 #if !defined(AFX_RESIZEVIEW_H__B72B5493_8B45_46FF_B424_6A37C8636436__INCLUDED_)
 #define AFX_RESIZEVIEW_H__B72B5493_8B45_46FF_B424_6A37C8636436__INCLUDED_
@@ -11,6 +12,7 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+enum {};
 
 class CResizeView : public CView
 {
@@ -53,7 +55,7 @@ protected:
 	void OpenPic();
 	void PicResizeInside();
 	void SavePic();
-	void PicResizeSeamCarve();
+	void PicResizeSeamCarve(int EnergyMethod);
 	void ShowOnDc(const IplImage*img,int idx = 0,int idy =0,const char * title = "ԭͼ");
 	//void cairResize(const IplImage* src,const IplImage* dst,int newWidth, int newHeight);
 	//void IMG_to_CML( IplImage * Source, CML_color * Dest );
@@ -67,6 +69,10 @@ protected:
 	afx_msg void OnPicSeamcarve();
 	afx_msg void OnFileSave();
 	afx_msg void OnFileSaveAs();
+	afx_msg void OnPicSeamcarve2();
+	afx_msg void OnPicSeamcarveSobel();
+	afx_msg void OnPicForTest();
+	afx_msg void OnPicSeamcarveLaplace();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

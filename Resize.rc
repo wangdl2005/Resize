@@ -130,8 +130,12 @@ BEGIN
     END
     POPUP "图像处理"
     BEGIN
+        MENUITEM "ForTest",                     ID_PIC_FOR_TEST
         MENUITEM "内置ReSize",                  ID_PIC_RESIZE_INSIDE
         MENUITEM "SeamCarve",                   ID_PIC_SEAMCARVE
+        MENUITEM "SeamCarveAvg",                ID_PIC_SEAMCARVE2
+        MENUITEM "SeamCarveSobel",              ID_PIC_SEAMCARVE_SOBEL
+        MENUITEM "SeamCarveLaplace",            ID_PIC_SEAMCARVE_LAPLACE
     END
     POPUP "查看(&V)"
     BEGIN

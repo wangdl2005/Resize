@@ -33,6 +33,10 @@ BEGIN_MESSAGE_MAP(CResizeView, CView)
 	ON_COMMAND(ID_PIC_SEAMCARVE, OnPicSeamcarve)
 	ON_COMMAND(ID_FILE_SAVE, OnFileSave)
 	ON_COMMAND(ID_FILE_SAVE_AS, OnFileSaveAs)
+	ON_COMMAND(ID_PIC_SEAMCARVE2, OnPicSeamcarve2)
+	ON_COMMAND(ID_PIC_SEAMCARVE_SOBEL, OnPicSeamcarveSobel)
+	ON_COMMAND(ID_PIC_FOR_TEST, OnPicForTest)
+	ON_COMMAND(ID_PIC_SEAMCARVE_LAPLACE, OnPicSeamcarveLaplace)
 	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, CView::OnFilePrint)
@@ -149,11 +153,11 @@ void CResizeView::OpenPic()
 		{
 			delete proc;		
 		}
-		proc = new ImageProcessor (path,false);
+		proc = new ImageProcessor (path,true);
 		CClientDC dc(this);
 		Invalidate(TRUE);
 		UpdateWindow();
-		ShowOnDc(proc->getImg());	
+		//ShowOnDc(proc->getImg());	
 	}
 }
 void CResizeView::PicResizeInside()
@@ -191,8 +195,8 @@ void CResizeView::PicResizeInside()
 				CV_INTER_AREA - 使用象素关系重采样。当图像缩小时候，该方法可以避免波纹出现。当图像放大时，类似于 CV_INTER_NN 方法..
 				CV_INTER_CUBIC - 立方插值.
 				*/
-				procNew = new ImageProcessor(desc,"转换后的图片(内置方法)",false);		
-				ShowOnDc(procNew->getImg(),proc->getImg()->width + 10, 0,"转换后的图片(内置方法)");				
+				procNew = new ImageProcessor(desc,"转换后的图片(内置方法)",true);		
+				//ShowOnDc(procNew->getImg(),proc->getImg()->width + 10, 0,"转换后的图片(内置方法)");				
 				cvReleaseImage(&desc);
 				time_t tt_end;
 				tt_end = (time_t) timeGetTime();
@@ -206,7 +210,7 @@ void CResizeView::PicResizeInside()
 	}
 }
 
-void CResizeView::PicResizeSeamCarve()
+void CResizeView::PicResizeSeamCarve(int energyMethod)
 {
 	if(proc != 0)
 	{
@@ -250,9 +254,9 @@ void CResizeView::PicResizeSeamCarve()
 			nChan_toSet = proc->getImg()->nChannels;
 			//预设图片空间，防止算法中重复申请空间
 			img = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
-			mask = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
-			mask2 = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
-			gra = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
+			mask = cvCreateImage(cvSize(wid_toSet,h_toSet),IPL_DEPTH_8U,1);
+			mask2 = cvCreateImage(cvSize(wid_toSet,h_toSet),IPL_DEPTH_8U,1);
+			gra = cvCreateImage(cvSize(wid_toSet,h_toSet),IPL_DEPTH_8U,1);
 			dis = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
 			cvZero(img);
 			for(int i=0;i<wid_from;i++)
@@ -266,7 +270,35 @@ void CResizeView::PicResizeSeamCarve()
 			cvZero(mask2);			
 			cvZero(gra);
 			cvZero(dis);
-			SeamCarve::neoBrightGradient(img,gra);				
+			//SeamCarve::neoBrightGradient(img,gra);
+			switch (energyMethod)
+			{
+			case SEAM_CAVE_GRA_BRIGHT ://BrightGra	
+			   {
+					SeamCarve::neoBrightGradient(img,gra);
+					break;
+			   }
+			case SEAM_CAVE_GRA_BRIGHT_AVG ://BrightGraAvg
+			   {
+					SeamCarve::neoBrightAvgGradient(img,gra);
+					break;
+			   }
+			case SEAM_CAVE_GRA_SOBEL:
+				{
+					SeamCarve::neoSobelGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_LAPLACE:
+				{
+					SeamCarve::neoLaplaceGradient(img,gra);
+					break;
+				}
+			default : 
+				{
+					MessageBox("Wrong Energy Method");
+					return;
+				}
+			}
 			while(h_from!=h_to)
 			{
 				if(h_from>h_to)
@@ -280,7 +312,34 @@ void CResizeView::PicResizeSeamCarve()
 					h_from ++;
 				}
 			}
-			SeamCarve::neoBrightGradient(img,gra);		
+			switch (energyMethod)
+			{
+			case SEAM_CAVE_GRA_BRIGHT ://BrightGra	
+				{
+					SeamCarve::neoBrightGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_BRIGHT_AVG ://BrightGraAvg
+				{
+					SeamCarve::neoBrightAvgGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_SOBEL:
+				{
+					SeamCarve::neoSobelGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_LAPLACE:
+				{
+					SeamCarve::neoLaplaceGradient(img,gra);
+					break;
+				}
+			default : 
+				{
+					MessageBox("Wrong Energy Method");
+					return;
+				}
+			}
 			while(wid_from!=wid_to)
 			{
 				if(wid_from>wid_to)
@@ -294,8 +353,8 @@ void CResizeView::PicResizeSeamCarve()
 					wid_from ++;
 				}
 			}
-			procNew = new ImageProcessor(img,"转换后的图片(SeamCarv)",false);
-			ShowOnDc(procNew->getImg(),0, proc->getImg()->height + 30,"转换后的图片(SeamCarv)");
+			procNew = new ImageProcessor(img,"转换后的图片(SeamCarv)",true);
+			ImageProcessor * procTemp = new ImageProcessor(gra,"gra");
 			cvReleaseImage(&img);
 			cvReleaseImage(&mask);
 			cvReleaseImage(&mask2);
@@ -360,11 +419,43 @@ void CResizeView::OnFileSaveAs()
 void CResizeView::OnPicSeamcarve() 
 {
 	// TODO: Add your command handler code here
-	PicResizeSeamCarve();
+	PicResizeSeamCarve(SEAM_CAVE_GRA_BRIGHT);
 }
 
 void CResizeView::OnFileSave() 
 {
 	// TODO: Add your command handler code here
 	SavePic();
+}
+
+void CResizeView::OnPicSeamcarve2() 
+{
+	// TODO: Add your command handler code here
+	PicResizeSeamCarve(SEAM_CAVE_GRA_BRIGHT_AVG);
+	
+}
+
+void CResizeView::OnPicSeamcarveSobel() 
+{
+	// TODO: Add your command handler code here
+	PicResizeSeamCarve(SEAM_CAVE_GRA_SOBEL);
+}
+
+void CResizeView::OnPicForTest() 
+{
+	// TODO: Add your command handler code here
+	IplImage *src = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
+	cvCopy(proc->getImg(),src,NULL);
+	IplImage *gra = cvCreateImage(cvGetSize(proc->getImg()),IPL_DEPTH_8U,1);
+	cvZero(gra);
+	SeamCarve::neoLaplaceGradient(src,gra);
+	procNew = new ImageProcessor(gra,"gra");
+	cvReleaseImage(&src);
+	cvReleaseImage(&gra);
+}
+
+void CResizeView::OnPicSeamcarveLaplace() 
+{
+	// TODO: Add your command handler code here
+	PicResizeSeamCarve(SEAM_CAVE_GRA_LAPLACE);
 }

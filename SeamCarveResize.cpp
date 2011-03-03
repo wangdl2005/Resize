@@ -1,9 +1,97 @@
 #include "SeamCarveResize.h"
+#include "ImageProcessor.h"
+
+
 void SeamCarve::neoBrightGradient(const IplImage *src,IplImage *gra){
 	for (int h=0;h<src->height-1;h++)
 		for (int w=0;w<src->width-1;w++)
+			//按照论文应再除以max(HOG(I(X,Y))),这个为常量在判断时可以忽略
 			getTiduG(h,w)=(abs(getTiduB(0,0)-getTiduB(0,1))+abs(getTiduB(0,0)-getTiduB(1,0)))/3;
 }
+
+//另一种方法：一点的值=8邻域的值之和+自身/9？
+void SeamCarve::neoBrightAvgGradient(const IplImage *src,IplImage *gra){
+	IplImage *tempGra = cvCreateImage(cvGetSize(gra),gra->depth,gra->nChannels);
+	for (int h=0;h<src->height-1;h++)
+		for (int w=0;w<src->width-1;w++)
+		{
+			getTiduEnergy(h,w)=(abs(getTiduB(0,0)-getTiduB(0,1))+abs(getTiduB(0,0)-getTiduB(1,0)))/3;
+		}
+	for(int i=1;i<gra->height-1;i++)
+	{
+		for(int j=1;j<gra->width-1;j++)
+		{
+			getTiduG(i,j) = (getTiduEnergy(i,j) + getTiduEnergy(i-1,j-1) + getTiduEnergy(i-1,j) + getTiduEnergy(i-1,j+1)
+				+ getTiduEnergy(i,j-1) +getTiduEnergy(i,j+1) + getTiduEnergy(i+1,j-1) + getTiduEnergy(i+1,j) + getTiduEnergy(i+1,j+1))/9;
+		}
+	}
+	cvReleaseImage(&tempGra);
+}
+
+void SeamCarve::neoLaplaceGradient(const IplImage* src,IplImage *pImg8u)
+{
+	IplImage *pImage = NULL;
+	IplImage *pImgLaplace = NULL;//用于灰度图像Sobel转换
+	//IplImage *pImg8u = NULL;//用于图像格式转换
+	IplImage *pImg8uSmooth = NULL;//存储平滑后的图像
+	IplImage *pImgColor = NULL;//用于Sobel变换
+	IplImage *pImgSobelColor = NULL;//用于彩色Sobel变换
+	
+	pImage = cvCreateImage(cvGetSize(src),src->depth,src->nChannels);
+	
+	cvCopy(src,pImage);
+	
+	pImg8uSmooth = cvCreateImage(cvGetSize(pImage),IPL_DEPTH_8U,1);
+	
+	cvCvtColor(pImage,pImg8u,CV_BGR2GRAY);
+	
+	cvSmooth(pImg8u,pImg8uSmooth,CV_GAUSSIAN,3,0,0);
+	
+	pImgLaplace = cvCreateImage(cvGetSize(pImage),IPL_DEPTH_16S,1);
+	
+	cvLaplace(pImg8uSmooth,pImgLaplace,3);
+	
+	cvConvertScaleAbs(pImgLaplace,pImg8u,1,0);
+	
+	cvReleaseImage(&pImgSobelColor);
+	cvReleaseImage(&pImgColor);
+	cvReleaseImage(&pImg8uSmooth);
+	cvReleaseImage(&pImgLaplace);
+	cvReleaseImage(&pImage);
+}
+
+void SeamCarve::neoSobelGradient(const IplImage *src,IplImage *pImg8u)
+{
+	IplImage *pImage = NULL;
+	IplImage *pImgSobelgray = NULL;//用于灰度图像Sobel转换
+	//IplImage *pImg8u = NULL;//用于图像格式转换
+	IplImage *pImg8uSmooth = NULL;//存储平滑后的图像
+	IplImage *pImgColor = NULL;//用于Sobel变换
+	IplImage *pImgSobelColor = NULL;//用于彩色Sobel变换
+
+	pImage = cvCreateImage(cvGetSize(src),src->depth,src->nChannels);
+
+	cvCopy(src,pImage);
+
+	pImg8uSmooth = cvCreateImage(cvGetSize(pImage),IPL_DEPTH_8U,1);
+
+	cvCvtColor(pImage,pImg8u,CV_BGR2GRAY);
+
+	cvSmooth(pImg8u,pImg8uSmooth,CV_GAUSSIAN,3,0,0);
+
+	pImgSobelgray = cvCreateImage(cvGetSize(pImage),IPL_DEPTH_16S,1);
+
+	cvSobel(pImg8uSmooth,pImgSobelgray,0,1,3);
+
+	cvConvertScaleAbs(pImgSobelgray,pImg8u,1,0);
+	
+	cvReleaseImage(&pImgSobelColor);
+	cvReleaseImage(&pImgColor);
+	cvReleaseImage(&pImg8uSmooth);
+	cvReleaseImage(&pImgSobelgray);
+	cvReleaseImage(&pImage);
+}
+
 int SeamCarve::pomin(int x,int y,int z){
 	if ((x==maxint)&&(y==maxint)&&(z==maxint))
 		return 2;
@@ -15,6 +103,7 @@ int SeamCarve::pomin(int x,int y,int z){
 			if (y<z) return 0;
 			else return 1;
 }
+
 void SeamCarve::nSeamCarving(IplImage *img,IplImage *mask,IplImage *mask2,IplImage *gra,IplImage *dis){
 	//路径
 	IplImage *seam = cvCreateImage(cvGetSize(img),IPL_DEPTH_8S,1);
@@ -185,7 +274,7 @@ void SeamCarve::nSeamCarvingLarge(IplImage *img,IplImage *mask,IplImage *mask2,I
 			else getPointImg32S(sum,i,j)=maxint;
 	//找到最小的sum
 	k=maxint;int z = 0;
-	j=-1;int jmax = 0;
+	j=-1;int jmax = -1;
 	for (i=0;i<hh;i++)
 	{
 		if (getPointImg32S(sum,width-1,i) < k){
@@ -201,7 +290,7 @@ void SeamCarve::nSeamCarvingLarge(IplImage *img,IplImage *mask,IplImage *mask2,I
 	
 	//按路径压缩图像
 	if (k<maxint){
-		i = img->width - 1;
+		i = width - 1;
 		while(i>=0){
 			getPointImg8U(gra,i,j) = getPointImg8U(gra,i,jmax);
 			for (k=hh;k>j;k--)
@@ -254,14 +343,14 @@ void SeamCarve::nSeamCarvingLargeVertical(IplImage *img,IplImage *mask,IplImage 
 			}
 			else getPointImg32S(sum,j,i)=maxint;
 	k=maxint;int z=0;
-	j=-1;int jmax = 0;
+	j=-1;int jmax = -1;
 	for (i=0;i<hh;i++)
 	{
-		if (getPointImg32S(sum,i,img->height-1) < k){
+		if (getPointImg32S(sum,i,height-1) < k){
 			k = getPointImg32S(sum,i,height-1);
 			j = i;
 		}
-		if(getPointImg32S(sum,i,img->height-1) > z)
+		if(getPointImg32S(sum,i,height-1) > z)
 		{
 			z = getPointImg32S(sum,i,height-1);
 			jmax = i;

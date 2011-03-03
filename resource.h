@@ -12,6 +12,10 @@
 #define IDC_HORIGIN                     1003
 #define ID_PIC_RESIZE_INSIDE            32771
 #define ID_PIC_SEAMCARVE                32772
+#define ID_PIC_SEAMCARVE2               32773
+#define ID_PIC_SEAMCARVE_SOBEL          32774
+#define ID_PIC_FOR_TEST                 32775
+#define ID_PIC_SEAMCARVE_LAPLACE        32776
 
 // Next default values for new objects
 // 
@@ -19,7 +23,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         32773
+#define _APS_NEXT_COMMAND_VALUE         32777
 #define _APS_NEXT_CONTROL_VALUE         1003
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
