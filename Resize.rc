@@ -136,6 +136,7 @@ BEGIN
         MENUITEM "SeamCarveAvg",                ID_PIC_SEAMCARVE2
         MENUITEM "SeamCarveSobel",              ID_PIC_SEAMCARVE_SOBEL
         MENUITEM "SeamCarveLaplace",            ID_PIC_SEAMCARVE_LAPLACE
+        MENUITEM "SeamCarveCanny",              ID_PIC_SEAMCARVE_CANNY
     END
     POPUP "²é¿´(&V)"
     BEGIN

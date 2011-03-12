@@ -12,6 +12,7 @@
 #include "SeamCarveResize.h"
 #include <time.h>
 #include <mmsystem.h>
+#include "Log.h"
 //tiemGetTime()调用
 #pragma comment(lib,"winmm.lib")
 
@@ -37,6 +38,7 @@ BEGIN_MESSAGE_MAP(CResizeView, CView)
 	ON_COMMAND(ID_PIC_SEAMCARVE_SOBEL, OnPicSeamcarveSobel)
 	ON_COMMAND(ID_PIC_FOR_TEST, OnPicForTest)
 	ON_COMMAND(ID_PIC_SEAMCARVE_LAPLACE, OnPicSeamcarveLaplace)
+	ON_COMMAND(ID_PIC_SEAMCARVE_CANNY, OnPicSeamcarveCanny)
 	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, CView::OnFilePrint)
@@ -248,6 +250,8 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 			int h_toSet = 0;
 			int depth_toSet = 0;
 			int nChan_toSet = 0;
+			long uNew = 0;
+			long uOld = 0;
 			wid_toSet = wid_from < wid_to ? wid_to : proc->getImg()->width;
 			h_toSet = h_from < h_to ? h_to : proc->getImg()->height;
 			depth_toSet = proc->getImg()->depth;
@@ -293,24 +297,55 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 					SeamCarve::neoLaplaceGradient(img,gra);
 					break;
 				}
+			case SEAM_CAVE_GRA_CANNY:
+				{
+					SeamCarve::neoCannyGradient(img,gra);
+					break;
+				}
 			default : 
 				{
 					MessageBox("Wrong Energy Method");
 					return;
 				}
 			}
+			uOld = SeamCarve::getNiuquXishu(img);
 			while(h_from!=h_to)
 			{
-				if(h_from>h_to)
+				uNew = SeamCarve::getNiuquXishu(img);
+				if(abs(uNew - uOld) < 2)
 				{
-					SeamCarve::nSeamCarving(img,mask,mask2,gra,dis);
-					h_from = img->height ;
+					if(h_from>h_to)
+					{
+						SeamCarve::nSeamCarving(img,mask,mask2,gra,dis);
+						h_from = img->height ;
+					}
+					else if(h_from<h_to)
+					{
+						SeamCarve::nSeamCarvingLarge(img,mask,mask2,gra,dis,h_from,wid_from);
+						h_from ++;
+					}
 				}
-				else if(h_from<h_to)
+				else
 				{
-					SeamCarve::nSeamCarvingLarge(img,mask,mask2,gra,dis,h_from,wid_from);
-					h_from ++;
+					IplImage *pImgTmp;
+					if(h_from>h_to)
+					/*
+					{
+											pImgTmp = cvCreateImage(cvSize(wid_from,(--h_from)),img->depth,img->nChannels);
+										}
+										else if(h_from<h_to)
+										{
+											pImgTmp = cvCreateImage(cvSize(wid_from,(++h_from)),img->depth,img->nChannels);
+										
+										}*/
+					pImgTmp = cvCreateImage(cvSize(wid_from,h_to),img->depth,img->nChannels);
+					cvResize(img,pImgTmp,CV_INTER_CUBIC);
+					img = cvCreateImage(cvGetSize(pImgTmp),pImgTmp->depth,pImgTmp->nChannels);
+					cvCopy(pImgTmp,img);
+					cvReleaseImage(&pImgTmp);
+					break;
 				}
+				uOld = uNew;
 			}
 			switch (energyMethod)
 			{
@@ -334,24 +369,55 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 					SeamCarve::neoLaplaceGradient(img,gra);
 					break;
 				}
+			case SEAM_CAVE_GRA_CANNY:
+				{
+					SeamCarve::neoCannyGradient(img,gra);
+					break;
+				}
 			default : 
 				{
 					MessageBox("Wrong Energy Method");
 					return;
 				}
 			}
+			uOld = SeamCarve::getNiuquXishu(img);
 			while(wid_from!=wid_to)
 			{
-				if(wid_from>wid_to)
+				uNew = SeamCarve::getNiuquXishu(img);
+				if(abs(uNew - uOld) < 2)
 				{
-					SeamCarve::nSeamCarvingVertical(img,mask,mask2,gra,dis);
-					wid_from = img->width;
+					if(wid_from>wid_to)
+					{
+						SeamCarve::nSeamCarvingVertical(img,mask,mask2,gra,dis);
+						wid_from = img->width;
+					}
+					else if(wid_from<wid_to)
+					{
+						SeamCarve::nSeamCarvingLargeVertical(img,mask,mask2,gra,dis,h_from,wid_from);
+						wid_from ++;
+					}
 				}
-				else if(wid_from<wid_to)
+				else
 				{
-					SeamCarve::nSeamCarvingLargeVertical(img,mask,mask2,gra,dis,h_from,wid_from);
-					wid_from ++;
+					IplImage *pImgTmp;
+					/*
+					if(wid_from>wid_to)
+										{
+											pImgTmp = cvCreateImage(cvSize((--wid_from),h_to),img->depth,img->nChannels);
+										}
+										else if(wid_from<wid_to)
+										{
+											pImgTmp = cvCreateImage(cvSize((++wid_from),h_to),img->depth,img->nChannels);
+											
+										}*/
+					pImgTmp = cvCreateImage(cvSize(wid_to,h_to),img->depth,img->nChannels);
+					cvResize(img,pImgTmp,CV_INTER_CUBIC);
+					img = cvCreateImage(cvGetSize(pImgTmp),pImgTmp->depth,img->nChannels);
+					cvCopy(pImgTmp,img);
+					cvReleaseImage(&pImgTmp);
+					break;
 				}
+				uOld = uNew;
 			}
 			procNew = new ImageProcessor(img,"转换后的图片(SeamCarv)",true);
 			ImageProcessor * procTemp = new ImageProcessor(gra,"gra");
@@ -364,6 +430,7 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 			tt_end = (time_t) timeGetTime();
 			char tempString[20];
 			sprintf(tempString,"花费时间为%d毫秒",(tt_end-tt_start));
+			Log::toLog(tempString);
 			MessageBox(tempString);
 		}		
 	}
@@ -441,21 +508,82 @@ void CResizeView::OnPicSeamcarveSobel()
 	PicResizeSeamCarve(SEAM_CAVE_GRA_SOBEL);
 }
 
-void CResizeView::OnPicForTest() 
-{
-	// TODO: Add your command handler code here
-	IplImage *src = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
-	cvCopy(proc->getImg(),src,NULL);
-	IplImage *gra = cvCreateImage(cvGetSize(proc->getImg()),IPL_DEPTH_8U,1);
-	cvZero(gra);
-	SeamCarve::neoLaplaceGradient(src,gra);
-	procNew = new ImageProcessor(gra,"gra");
-	cvReleaseImage(&src);
-	cvReleaseImage(&gra);
-}
 
 void CResizeView::OnPicSeamcarveLaplace() 
 {
 	// TODO: Add your command handler code here
 	PicResizeSeamCarve(SEAM_CAVE_GRA_LAPLACE);
+}
+
+void CResizeView::OnPicSeamcarveCanny() 
+{
+	// TODO: Add your command handler code here
+	PicResizeSeamCarve(SEAM_CAVE_GRA_CANNY);
+}
+
+
+void CResizeView::OnPicForTest() 
+{
+	// TODO: Add your command handler code here
+	/*
+	
+		IplImage *src = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
+			cvCopy(proc->getImg(),src,NULL);
+			IplImage *gra = cvCreateImage(cvGetSize(proc->getImg()),IPL_DEPTH_8U,1);
+			cvZero(gra);
+			SeamCarve::neoCannyGradient(src,gra);
+			procNew = new ImageProcessor(gra,"gra");
+			cvReleaseImage(&src);
+			cvReleaseImage(&gra);*/
+			// 小波变换层数
+			int nLayer = 1;
+			// 输入彩色图像
+			IplImage *pSrc = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
+			cvCopy(proc->getImg(),pSrc,NULL);
+			 // 计算小波图象大小
+			 CvSize size = cvGetSize(pSrc);
+			 if ((pSrc->width >> nLayer) << nLayer != pSrc->width)
+			 {
+				 size.width = ((pSrc->width >> nLayer) + 1) << nLayer;
+			 }
+			 if ((pSrc->height >> nLayer) << nLayer != pSrc->height)
+			 {
+				 size.height = ((pSrc->height >> nLayer) + 1) << nLayer;
+			 }
+			 // 创建小波图象
+			 IplImage *pWavelet = cvCreateImage(size, IPL_DEPTH_32F, pSrc->nChannels);
+			 if (pWavelet)
+			 {
+				 // 小波图象赋值
+				 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
+				 cvConvertScale(pSrc, pWavelet, 1, -128);
+				 cvResetImageROI(pWavelet);
+				 // 彩色图像小波变换
+				 IplImage *pImage = cvCreateImage(cvGetSize(pWavelet), IPL_DEPTH_32F, 1);
+				 if (pImage)
+				 {
+					 for (int i = 1; i <= pWavelet->nChannels; i++)
+					 {
+						 cvSetImageCOI(pWavelet, i);
+						 cvCopy(pWavelet, pImage, NULL);
+						 // 二维离散小波变换
+						 SeamCarve::DWT(pImage, nLayer);
+						 // 二维离散小波恢复
+						 // IDWT(pImage, nLayer);
+						 cvCopy(pImage, pWavelet, NULL);
+					 }
+					 cvSetImageCOI(pWavelet, 0);
+					 cvReleaseImage(&pImage);
+				 }
+				 // 小波变换图象
+				 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
+				 cvConvertScale(pWavelet, pSrc, 1, 128);
+				 cvResetImageROI(pWavelet); // 本行代码有点多余，但有利用养成良好的编程习惯
+				 cvReleaseImage(&pWavelet);
+			 }
+			 // 显示图像pSrc
+			 cvNamedWindow("dwt",1);
+			 cvShowImage("dwt",pSrc);	 
+			 // ...
+			 cvReleaseImage(&pSrc);	
 }

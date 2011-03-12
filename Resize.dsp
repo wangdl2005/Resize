@@ -140,6 +140,10 @@ SOURCE=.\InputDlg.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Log.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\MainFrm.h
 # End Source File
 # Begin Source File

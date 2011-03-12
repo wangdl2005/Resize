@@ -15,9 +15,9 @@ Class3=CResizeView
 Class4=CMainFrame
 
 ResourceCount=3
-Resource1=IDD_ABOUTBOX
+Resource1=IDR_MAINFRAME
 Class5=CAboutDlg
-Resource2=IDR_MAINFRAME
+Resource2=IDD_ABOUTBOX
 Class6=CInputDlg
 Resource3=IDD_SIZEDLG
 
@@ -50,7 +50,7 @@ ImplementationFile=MainFrm.cpp
 Filter=T
 BaseClass=CFrameWnd
 VirtualFilter=fWC
-LastObject=ID_PIC_SEAMCARVE_LAPLACE
+LastObject=ID_PIC_SEAMCARVE_CANNY
 
 
 
@@ -92,10 +92,11 @@ Command16=ID_PIC_SEAMCARVE
 Command17=ID_PIC_SEAMCARVE2
 Command18=ID_PIC_SEAMCARVE_SOBEL
 Command19=ID_PIC_SEAMCARVE_LAPLACE
-Command20=ID_VIEW_TOOLBAR
-Command21=ID_VIEW_STATUS_BAR
-Command22=ID_APP_ABOUT
-CommandCount=22
+Command20=ID_PIC_SEAMCARVE_CANNY
+Command21=ID_VIEW_TOOLBAR
+Command22=ID_VIEW_STATUS_BAR
+Command23=ID_APP_ABOUT
+CommandCount=23
 
 [ACL:IDR_MAINFRAME]
 Type=1
