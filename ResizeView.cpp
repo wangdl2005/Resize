@@ -39,6 +39,7 @@ BEGIN_MESSAGE_MAP(CResizeView, CView)
 	ON_COMMAND(ID_PIC_FOR_TEST, OnPicForTest)
 	ON_COMMAND(ID_PIC_SEAMCARVE_LAPLACE, OnPicSeamcarveLaplace)
 	ON_COMMAND(ID_PIC_SEAMCARVE_CANNY, OnPicSeamcarveCanny)
+	ON_COMMAND(ID_PIC_SEAMCARVE_WEIGHT, OnPicSeamcarveWeight)
 	//}}AFX_MSG_MAP
 	// Standard printing commands
 	ON_COMMAND(ID_FILE_PRINT, CView::OnFilePrint)
@@ -262,18 +263,21 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 			mask2 = cvCreateImage(cvSize(wid_toSet,h_toSet),IPL_DEPTH_8U,1);
 			gra = cvCreateImage(cvSize(wid_toSet,h_toSet),IPL_DEPTH_8U,1);
 			dis = cvCreateImage(cvSize(wid_toSet,h_toSet),depth_toSet,nChan_toSet);
-			cvZero(img);
+			cvZero(img);			
+			cvZero(dis);
 			for(int i=0;i<wid_from;i++)
 				for(int j=0;j<h_from;j++)
 				{
 					getPointImg8U3C(img,i,j,0)=getPointImg8U3C(proc->getImg(),i,j,0);
 					getPointImg8U3C(img,i,j,1)=getPointImg8U3C(proc->getImg(),i,j,1);
 					getPointImg8U3C(img,i,j,2)=getPointImg8U3C(proc->getImg(),i,j,2);
+					getPointImg8U3C(dis,i,j,0)=getPointImg8U3C(proc->getImg(),i,j,0);
+					getPointImg8U3C(dis,i,j,1)=getPointImg8U3C(proc->getImg(),i,j,1);
+					getPointImg8U3C(dis,i,j,2)=getPointImg8U3C(proc->getImg(),i,j,2);
 				}
 			cvZero(mask);			
 			cvZero(mask2);			
 			cvZero(gra);
-			cvZero(dis);
 			//SeamCarve::neoBrightGradient(img,gra);
 			switch (energyMethod)
 			{
@@ -300,6 +304,11 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 			case SEAM_CAVE_GRA_CANNY:
 				{
 					SeamCarve::neoCannyGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_WEIGHT:
+				{
+					SeamCarve::neoWeightGradient(img,gra);
 					break;
 				}
 			default : 
@@ -372,6 +381,11 @@ void CResizeView::PicResizeSeamCarve(int energyMethod)
 			case SEAM_CAVE_GRA_CANNY:
 				{
 					SeamCarve::neoCannyGradient(img,gra);
+					break;
+				}
+			case SEAM_CAVE_GRA_WEIGHT:
+				{
+					SeamCarve::neoWeightGradient(img,gra);
 					break;
 				}
 			default : 
@@ -525,65 +539,73 @@ void CResizeView::OnPicSeamcarveCanny()
 void CResizeView::OnPicForTest() 
 {
 	// TODO: Add your command handler code here
-	/*
+	
 	
 		IplImage *src = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
-			cvCopy(proc->getImg(),src,NULL);
-			IplImage *gra = cvCreateImage(cvGetSize(proc->getImg()),IPL_DEPTH_8U,1);
-			cvZero(gra);
-			SeamCarve::neoCannyGradient(src,gra);
-			procNew = new ImageProcessor(gra,"gra");
-			cvReleaseImage(&src);
-			cvReleaseImage(&gra);*/
+		cvCopy(proc->getImg(),src,NULL);
+		IplImage *gra = cvCreateImage(cvGetSize(proc->getImg()),IPL_DEPTH_8U,1);
+		cvZero(gra);
+		SeamCarve::neoWeightGradient(src,gra);
+		procNew = new ImageProcessor(gra,"gra");
+		cvReleaseImage(&src);
+		cvReleaseImage(&gra);
+		/*
 			// 小波变换层数
-			int nLayer = 1;
-			// 输入彩色图像
-			IplImage *pSrc = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
-			cvCopy(proc->getImg(),pSrc,NULL);
-			 // 计算小波图象大小
-			 CvSize size = cvGetSize(pSrc);
-			 if ((pSrc->width >> nLayer) << nLayer != pSrc->width)
-			 {
-				 size.width = ((pSrc->width >> nLayer) + 1) << nLayer;
-			 }
-			 if ((pSrc->height >> nLayer) << nLayer != pSrc->height)
-			 {
-				 size.height = ((pSrc->height >> nLayer) + 1) << nLayer;
-			 }
-			 // 创建小波图象
-			 IplImage *pWavelet = cvCreateImage(size, IPL_DEPTH_32F, pSrc->nChannels);
-			 if (pWavelet)
-			 {
-				 // 小波图象赋值
-				 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
-				 cvConvertScale(pSrc, pWavelet, 1, -128);
-				 cvResetImageROI(pWavelet);
-				 // 彩色图像小波变换
-				 IplImage *pImage = cvCreateImage(cvGetSize(pWavelet), IPL_DEPTH_32F, 1);
-				 if (pImage)
-				 {
-					 for (int i = 1; i <= pWavelet->nChannels; i++)
+					int nLayer = 1;
+					// 输入彩色图像
+					IplImage *pSrc = cvCreateImage(cvGetSize(proc->getImg()),proc->getImg()->depth,proc->getImg()->nChannels);
+					cvCopy(proc->getImg(),pSrc,NULL);
+					 // 计算小波图象大小
+					 CvSize size = cvGetSize(pSrc);
+					 if ((pSrc->width >> nLayer) << nLayer != pSrc->width)
 					 {
-						 cvSetImageCOI(pWavelet, i);
-						 cvCopy(pWavelet, pImage, NULL);
-						 // 二维离散小波变换
-						 SeamCarve::DWT(pImage, nLayer);
-						 // 二维离散小波恢复
-						 // IDWT(pImage, nLayer);
-						 cvCopy(pImage, pWavelet, NULL);
+						 size.width = ((pSrc->width >> nLayer) + 1) << nLayer;
 					 }
-					 cvSetImageCOI(pWavelet, 0);
-					 cvReleaseImage(&pImage);
-				 }
-				 // 小波变换图象
-				 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
-				 cvConvertScale(pWavelet, pSrc, 1, 128);
-				 cvResetImageROI(pWavelet); // 本行代码有点多余，但有利用养成良好的编程习惯
-				 cvReleaseImage(&pWavelet);
-			 }
-			 // 显示图像pSrc
-			 cvNamedWindow("dwt",1);
-			 cvShowImage("dwt",pSrc);	 
-			 // ...
-			 cvReleaseImage(&pSrc);	
+					 if ((pSrc->height >> nLayer) << nLayer != pSrc->height)
+					 {
+						 size.height = ((pSrc->height >> nLayer) + 1) << nLayer;
+					 }
+					 // 创建小波图象
+					 IplImage *pWavelet = cvCreateImage(size, IPL_DEPTH_32F, pSrc->nChannels);
+					 if (pWavelet)
+					 {
+						 // 小波图象赋值
+						 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
+						 cvConvertScale(pSrc, pWavelet, 1, -128);
+						 cvResetImageROI(pWavelet);
+						 // 彩色图像小波变换
+						 IplImage *pImage = cvCreateImage(cvGetSize(pWavelet), IPL_DEPTH_32F, 1);
+						 if (pImage)
+						 {
+							 for (int i = 1; i <= pWavelet->nChannels; i++)
+							 {
+								 cvSetImageCOI(pWavelet, i);
+								 cvCopy(pWavelet, pImage, NULL);
+								 // 二维离散小波变换
+								 SeamCarve::DWT(pImage, nLayer);
+								 // 二维离散小波恢复
+								 // IDWT(pImage, nLayer);
+								 cvCopy(pImage, pWavelet, NULL);
+							 }
+							 cvSetImageCOI(pWavelet, 0);
+							 cvReleaseImage(&pImage);
+						 }
+						 // 小波变换图象
+						 cvSetImageROI(pWavelet, cvRect(0, 0, pSrc->width, pSrc->height));
+						 cvConvertScale(pWavelet, pSrc, 1, 128);
+						 cvResetImageROI(pWavelet); // 本行代码有点多余，但有利用养成良好的编程习惯
+						 cvReleaseImage(&pWavelet);
+					 }
+					 // 显示图像pSrc
+					 cvNamedWindow("dwt",1);
+					 cvShowImage("dwt",pSrc);	 
+					 // ...
+					 cvReleaseImage(&pSrc);*/
+			
+}
+
+void CResizeView::OnPicSeamcarveWeight() 
+{
+	// TODO: Add your command handler code here
+	PicResizeSeamCarve(SEAM_CAVE_GRA_WEIGHT);
 }

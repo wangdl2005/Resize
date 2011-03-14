@@ -74,6 +74,7 @@ protected:
 	afx_msg void OnPicForTest();
 	afx_msg void OnPicSeamcarveLaplace();
 	afx_msg void OnPicSeamcarveCanny();
+	afx_msg void OnPicSeamcarveWeight();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
